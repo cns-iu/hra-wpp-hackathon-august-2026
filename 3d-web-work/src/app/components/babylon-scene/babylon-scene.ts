@@ -7,13 +7,21 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  AbstractMesh,
   ArcRotateCamera,
+  Color3,
   Engine,
   HemisphericLight,
+  ImportMeshAsync,
   MeshBuilder,
+  PBRMaterial,
   Scene,
   Vector3,
 } from '@babylonjs/core';
+import '@babylonjs/loaders/glTF';
+
+const KIDNEY_GLB_URL =
+  'https://cdn.humanatlas.io/digital-objects/ref-organ/kidney-male-right/v1.3/assets/3d-vh-m-kidney-r.glb';
 
 @Component({
   selector: 'app-babylon-scene',
@@ -27,6 +35,8 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
 
   private engine?: Engine;
   private scene?: Scene;
+  private readonly boxSize = 0.1;
+  private kidneyMeshes: AbstractMesh[] = [];
 
   ngAfterViewInit(): void {
     try {
@@ -36,6 +46,7 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
     }
 
     this.scene = this.createScene(this.engine);
+    void this.loadKidney(this.scene, this.boxSize);
     this.engine.runRenderLoop(() => this.scene?.render());
   }
 
@@ -56,19 +67,53 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
       'camera',
       -Math.PI / 2,
       Math.PI / 2.5,
-      6,
-      Vector3.Zero(),
+      this.boxSize * 15,
+      new Vector3(this.boxSize, 0, 0),
       scene,
     );
     camera.attachControl(this.canvasRef.nativeElement, true);
+    camera.lowerRadiusLimit = this.boxSize;
+    camera.upperRadiusLimit = this.boxSize * 50;
 
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene);
 
-    const box = MeshBuilder.CreateBox('box', { size: .1 }, scene);
+    const box = MeshBuilder.CreateBox('box', { size: this.boxSize }, scene);
     // scene.onBeforeRenderObservable.add(() => {
     //   box.rotation.y += 0.01;
     // });
 
     return scene;
+  }
+
+  private async loadKidney(scene: Scene, referenceSize: number): Promise<void> {
+    try {
+      const result = await ImportMeshAsync(KIDNEY_GLB_URL, scene);
+      const root = result.meshes[0];
+
+      // // Normalize scale so the kidney is roughly the same size as the box
+      // const rawBounds = root.getHierarchyBoundingVectors();
+      // const rawSize = rawBounds.max.subtract(rawBounds.min);
+      // const scale = referenceSize / Math.max(rawSize.x, rawSize.y, rawSize.z);
+      // root.scaling.scaleInPlace(scale);
+
+      // Recenter the model, then place it beside the box
+      const bounds = root.getHierarchyBoundingVectors();
+      const center = bounds.max.add(bounds.min).scale(0.5);
+      root.position.subtractInPlace(center);
+      root.position.x += referenceSize * 2;
+      root.scaling = new Vector3(5, 5, 5);
+
+      this.kidneyMeshes = result.meshes.filter((mesh) => mesh.material);
+    } catch (err) {
+      console.error('Failed to load kidney model', err);
+    }
+  }
+
+  changeKidneyColor(): void {
+    const color = Color3.FromHexString('#FF0043');
+    for (const mesh of this.kidneyMeshes) {
+      console.log(mesh);
+      (mesh.material as PBRMaterial).albedoColor = color;
+    }
   }
 }
