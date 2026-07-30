@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { BabylonScene } from './components/babylon-scene/babylon-scene';
 
 @Component({
@@ -7,6 +7,4 @@ import { BabylonScene } from './components/babylon-scene/babylon-scene';
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('babylon-app');
-}
+export class App {}

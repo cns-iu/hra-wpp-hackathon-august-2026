@@ -8,13 +8,10 @@ import {
 } from '@angular/core';
 import {
   ArcRotateCamera,
-  Color4,
   Engine,
   HemisphericLight,
   MeshBuilder,
   Scene,
-  StandardMaterial,
-  Color3,
   Vector3,
 } from '@babylonjs/core';
 
@@ -33,19 +30,13 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     try {
-      this.engine = new Engine(this.canvasRef.nativeElement, true, {
-        preserveDrawingBuffer: true,
-        stencil: true,
-      });
+      this.engine = new Engine(this.canvasRef.nativeElement, true);
     } catch {
       return;
     }
 
     this.scene = this.createScene(this.engine);
-
-    this.engine.runRenderLoop(() => {
-      this.scene?.render();
-    });
+    this.engine.runRenderLoop(() => this.scene?.render());
   }
 
   @HostListener('window:resize')
@@ -60,7 +51,6 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
 
   private createScene(engine: Engine): Scene {
     const scene = new Scene(engine);
-    scene.clearColor = new Color4(0.06, 0.07, 0.09, 1);
 
     const camera = new ArcRotateCamera(
       'camera',
@@ -71,20 +61,13 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
       scene,
     );
     camera.attachControl(this.canvasRef.nativeElement, true);
-    camera.lowerRadiusLimit = 3;
-    camera.upperRadiusLimit = 20;
 
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene);
-    light.intensity = 0.9;
 
-    const box = MeshBuilder.CreateBox('box', { size: 2 }, scene);
-    const material = new StandardMaterial('boxMaterial', scene);
-    material.diffuseColor = new Color3(0.2, 0.6, 1);
-    box.material = material;
-
-    scene.onBeforeRenderObservable.add(() => {
-      box.rotation.y += 0.01;
-    });
+    const box = MeshBuilder.CreateBox('box', { size: .1 }, scene);
+    // scene.onBeforeRenderObservable.add(() => {
+    //   box.rotation.y += 0.01;
+    // });
 
     return scene;
   }
