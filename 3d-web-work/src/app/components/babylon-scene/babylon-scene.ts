@@ -46,7 +46,7 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
     }
 
     this.scene = this.createScene(this.engine);
-    void this.loadKidney(this.scene, this.boxSize);
+    this.loadKidney(this.scene, this.boxSize);
     this.engine.runRenderLoop(() => this.scene?.render());
   }
 
@@ -67,7 +67,7 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
       'camera',
       -Math.PI / 2,
       Math.PI / 2.5,
-      this.boxSize * 15,
+      100,
       new Vector3(this.boxSize, 0, 0),
       scene,
     );
@@ -78,9 +78,6 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
     const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene);
 
     const box = MeshBuilder.CreateBox('box', { size: this.boxSize }, scene);
-    // scene.onBeforeRenderObservable.add(() => {
-    //   box.rotation.y += 0.01;
-    // });
 
     return scene;
   }
@@ -104,16 +101,37 @@ export class BabylonScene implements AfterViewInit, OnDestroy {
       root.scaling = new Vector3(5, 5, 5);
 
       this.kidneyMeshes = result.meshes.filter((mesh) => mesh.material);
+
+      // Point the camera at the kidney now that we know its final position/size
+      const kidneyBounds = root.getHierarchyBoundingVectors();
+      const kidneyCenter = kidneyBounds.max.add(kidneyBounds.min).scale(0.5);
+      const kidneySize = kidneyBounds.max.subtract(kidneyBounds.min).length();
+
+      const camera = scene.activeCamera as ArcRotateCamera;
+      camera.target = kidneyCenter;
+      camera.radius = kidneySize * 2;
+      camera.lowerRadiusLimit = kidneySize * 0.1;
+      camera.upperRadiusLimit = kidneySize * 5;
     } catch (err) {
       console.error('Failed to load kidney model', err);
     }
   }
 
-  changeKidneyColor(): void {
+  public helloworld(): void {
+    console.log('HELLO');
+  }
+
+  public onToggle(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    console.log('toggle changed', checked);
+  }
+
+  public changeKidneyColor(): void {
     const color = Color3.FromHexString('#FF0043');
     for (const mesh of this.kidneyMeshes) {
       console.log(mesh);
       (mesh.material as PBRMaterial).albedoColor = color;
     }
   }
+
 }
