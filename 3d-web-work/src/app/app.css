@@ -7,3 +7,10 @@
   display: block;
   height: 100%;
 }
+
+.view-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
